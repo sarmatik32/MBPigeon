@@ -1,0 +1,37 @@
+version: "3.9"
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: mafia
+      POSTGRES_PASSWORD: mafia
+      POSTGRES_DB: mafia
+    ports: ["5432:5432"]
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mafia"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  pgbouncer:
+    image: edoburu/pgbouncer:1.23.1
+    environment:
+      DB_HOST: postgres
+      DB_USER: mafia
+      DB_PASSWORD: mafia
+      DB_NAME: mafia
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: "10000"
+      DEFAULT_POOL_SIZE: "50"
+    ports: ["6432:5432"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+
+volumes:
+  pgdata:
